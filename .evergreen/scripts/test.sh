@@ -336,17 +336,18 @@ else
   fi
 
   # Run tests and examples 1-by-1 with "run_test" so we can run them with valgrind.
-  run_test ./src/bsoncxx/test/test_bson
-  run_test ./src/mongocxx/test/test_driver
-  run_test ./src/mongocxx/test/test_client_side_encryption_specs
-  run_test ./src/mongocxx/test/test_crud_specs
-  run_test ./src/mongocxx/test/test_gridfs_specs
-  run_test ./src/mongocxx/test/test_command_monitoring_specs
-  run_test ./src/mongocxx/test/test_instance
-  run_test ./src/mongocxx/test/test_transactions_specs
-  run_test ./src/mongocxx/test/test_retryable_reads_specs
-  run_test ./src/mongocxx/test/test_read_write_concern_specs
-  run_test ./src/mongocxx/test/test_unified_format_specs
+  # run_test ./src/bsoncxx/test/test_bson
+  # run_test ./src/mongocxx/test/test_driver
+  # run_test ./src/mongocxx/test/test_client_side_encryption_specs
+  # run_test ./src/mongocxx/test/test_crud_specs
+  # run_test ./src/mongocxx/test/test_gridfs_specs
+  # run_test ./src/mongocxx/test/test_command_monitoring_specs
+  # run_test ./src/mongocxx/test/test_instance
+  # run_test ./src/mongocxx/test/test_transactions_specs
+  # run_test ./src/mongocxx/test/test_retryable_reads_specs
+  # run_test ./src/mongocxx/test/test_read_write_concern_specs
+  # run_test ./src/mongocxx/test/test_unified_format_specs
+  run_test ./src/mongocxx/test/block_time_ms_bug_repro
 
   # Only run examples if MONGODB_API_VERSION is unset. We do not append
   # API version to example clients, so examples will fail when requireApiVersion

@@ -217,6 +217,10 @@ add_executable(test_instance
 )
 target_compile_definitions(test_instance PRIVATE MONGOCXX_TEST_DISABLE_MAIN_INSTANCE)
 
+add_executable(block_time_ms_bug_repro
+    v_noabi/block_time_ms_bug_repro.cpp
+)
+
 add_executable(test_crud_specs
     ${mongocxx_test_bsoncxx}
     spec/crud.cpp
@@ -305,6 +309,7 @@ set_property(
         test_retryable_reads_specs
         test_transactions_specs
         test_unified_format_specs
+        block_time_ms_bug_repro
     APPEND PROPERTY LINK_LIBRARIES
         mongocxx::test_properties_with_main
 )
