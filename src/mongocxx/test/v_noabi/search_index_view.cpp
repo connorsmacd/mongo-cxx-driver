@@ -402,6 +402,55 @@ TEST_CASE("atlas search indexes prose tests", "[atlas][search_indexes]") {
 
         SUCCEED("Prose Test Case 8: Driver requires explicit type to create a vector search index");
     }
+
+    SECTION("auto-embed") {
+        bsoncxx::oid id;
+        auto coll = db.create_collection(id.to_string());
+        auto siv = coll.search_indexes();
+        //   {
+        //     name: 'test-auto-embed-search-index',
+        //     type: 'vectorSearch',
+        //     definition: {
+        //       fields: [
+        //         {
+        //           type: 'autoEmbed',
+        //           modality: 'text',
+        //           path: 'product.description',
+        //           model: 'voyage-4-large',
+        //           numDimensions 256,
+        //           quantization: 'binary'
+        //         },
+        //         {
+        //           type: 'filter',
+        //           path: 'script.author'
+        //         },
+        //       ]
+        //     }
+        //   }
+        auto const name = "test-auto-embed-search-index";
+        auto const type = "vectorSearch";
+        auto const definition = make_document(
+            kvp("fields",
+                make_array(
+                    make_document(
+                        kvp("type", "autoEmbed"),
+                        kvp("modality", "text"),
+                        kvp("path", "product.description"),
+                        kvp("model", "voyage-4-large"),
+                        kvp("numDimensions", 256),
+                        kvp("quantization", "binary")),
+                    make_document(kvp("type", "filter"), kvp("path", "script.author")))));
+        auto model = search_index_model(name, definition.view()).type(type);
+
+        REQUIRE(siv.create_one(model) == "test-auto-embed-search-index");
+
+        assert_soon([&siv, &model](void) -> bool {
+            auto cursor = siv.list();
+            return does_search_index_exist_on_cursor_with_type(cursor, model, "vectorSearch", false);
+        });
+
+        SUCCEED("Create one works with auto-embedding");
+    }
 }
 
 TEST_CASE("atlas search indexes tests", "[atlas][search_indexes]") {
