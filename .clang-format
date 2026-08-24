@@ -140,8 +140,8 @@ BreakTemplateDeclarations: Yes
 ColumnLimit:     120
 CommentPragmas:  '^\s*(@(addtogroup|copydoc|defgroup|fn|ref)|- )'
 CompactNamespaces: false
-ConstructorInitializerIndentWidth: 4
-ContinuationIndentWidth: 4
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
 Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 DisableFormat:   false
@@ -213,7 +213,7 @@ IndentExternBlock: AfterExternBlock
 IndentGotoLabels: true
 IndentPPDirectives: None
 IndentRequiresClause: true
-IndentWidth:     4
+IndentWidth:     2
 IndentWrappedFunctionNames: false
 InsertBraces:    false
 InsertNewlineAtEOF: true
