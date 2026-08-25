@@ -29,22 +29,26 @@ void process_result(bsoncxx::document::view result) {
 
 } // namespace
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
 // Start of example code:
 
 // Step 1: Detect overload errors
 
-char const* RETRYABLE_ERROR_LABEL = "RetryableError";
-char const* SYSTEM_OVERLOADED_ERROR = "SystemOverloadedError";
+constexpr auto k_retryable_error_label = "RetryableError";
+constexpr auto k_system_overloaded_error_label = "SystemOverloadedError";
 
 bool is_system_overloaded_error(mongocxx::operation_exception const& e) {
-  return e.has_error_label(SYSTEM_OVERLOADED_ERROR);
+  return e.has_error_label(k_system_overloaded_error_label);
 }
 
 // Step 2: Implement operation "retry" logic using exponential backoff and jitter
 
-double const BASE_BACKOFF_MS = 100.0;
-double const MAX_BACKOFF_MS = 10000.0;
-int const MAX_ATTEMPTS_DEFAULT = 2;
+using milliseconds_t = std::chrono::duration<double, std::milli>;
+
+constexpr auto k_base_backoff = milliseconds_t(100.0);
+constexpr auto k_max_backoff = milliseconds_t(10000.0);
+constexpr auto k_max_attempts_default = 2;
 
 double random_01() {
   static std::mt19937 gen(std::random_device{}());
@@ -52,45 +56,51 @@ double random_01() {
   return dist(gen);
 }
 
-double calculate_exponential_backoff(int attempt, double base_backoff_ms) {
-  return random_01() * std::min(MAX_BACKOFF_MS, base_backoff_ms * std::pow(2.0, attempt));
+milliseconds_t calculate_exponential_backoff(int attempt, milliseconds_t base_backoff) {
+  return random_01() * std::min(k_max_backoff, base_backoff * std::pow(2.0, attempt));
 }
 
 // get_base_backoff returns the base backoff to apply for an overload error. A server may attach a
 // positive `baseBackoffMS` to the error to replace the default base backoff.
-double get_base_backoff(mongocxx::operation_exception const& e) {
+milliseconds_t get_base_backoff(mongocxx::operation_exception const& e) {
   if (auto const& error_reply = e.raw_server_error()) {
-    auto elem = error_reply->view()["baseBackoffMS"];
+    auto const elem = error_reply->view()["baseBackoffMS"];
+
     if (elem && (elem.type() == bsoncxx::type::k_int32 || elem.type() == bsoncxx::type::k_int64)) {
-      std::int64_t base_backoff_ms =
-        elem.type() == bsoncxx::type::k_int32 ? elem.get_int32().value : elem.get_int64().value;
+      auto const base_backoff_ms = elem.type() == bsoncxx::type::k_int32
+                                     ? static_cast<std::int64_t>(elem.get_int32().value)
+                                     : elem.get_int64().value;
+
       if (base_backoff_ms > 0) {
-        return static_cast<double>(base_backoff_ms);
+        return milliseconds_t(static_cast<double>(base_backoff_ms));
       }
     }
   }
-  return BASE_BACKOFF_MS;
+
+  return k_base_backoff;
 }
 
 using retryable_fn = std::function<void()>;
 
-void execute_with_retries(retryable_fn fn, int max_attempts = MAX_ATTEMPTS_DEFAULT) {
-  double base_backoff_ms = BASE_BACKOFF_MS;
+void execute_with_retries(retryable_fn fn, int max_attempts = k_max_attempts_default) {
+  auto base_backoff_ms = k_base_backoff;
 
   for (int attempt = 0; attempt < max_attempts; ++attempt) {
-    bool is_retry = attempt > 0;
+    auto const is_retry = attempt > 0;
 
     if (is_retry) {
-      double delay = calculate_exponential_backoff(attempt, base_backoff_ms);
-      std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(delay)));
+      auto const delay = calculate_exponential_backoff(attempt, base_backoff_ms);
+      std::this_thread::sleep_for(delay);
     }
+
     try {
       fn();
       return;
 
     } catch (mongocxx::operation_exception const& e) {
-      bool is_retryable_overload_error = is_system_overloaded_error(e) && e.has_error_label(RETRYABLE_ERROR_LABEL);
-      bool can_retry = is_retryable_overload_error && attempt + 1 < max_attempts;
+      auto const is_retryable_overload_error =
+        is_system_overloaded_error(e) && e.has_error_label(k_retryable_error_label);
+      auto const can_retry = is_retryable_overload_error && attempt + 1 < max_attempts;
 
       // Apply the server-requested base backoff, if any, to the next attempt's delay.
       base_backoff_ms = get_base_backoff(e);
@@ -109,8 +119,7 @@ int main() {
 
   auto instance = mongocxx::instance();
   auto client = mongocxx::client(mongocxx::uri("mongodb://localhost:27017"));
-  auto db = client.database("db");
-  auto users_collection = db.collection("users");
+  auto users_collection = client["db"]["users"];
 
   // Original:
   {
@@ -128,3 +137,7 @@ int main() {
     }
   });
 }
+
+// End of example code
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
