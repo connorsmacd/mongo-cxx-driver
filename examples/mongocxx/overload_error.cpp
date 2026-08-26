@@ -80,9 +80,9 @@ milliseconds_t get_base_backoff(mongocxx::operation_exception const& e) {
   return k_base_backoff;
 }
 
-using retryable_fn = std::function<void()>;
+using retryable_fn_t = std::function<void()>;
 
-void execute_with_retries(retryable_fn fn, int max_attempts = k_max_attempts_default) {
+void execute_with_retries(retryable_fn_t fn, int max_attempts = k_max_attempts_default) {
   auto base_backoff_ms = k_base_backoff;
 
   for (int attempt = 0; attempt < max_attempts; ++attempt) {
